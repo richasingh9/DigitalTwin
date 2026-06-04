@@ -1,0 +1,11 @@
+﻿Temperature,Humidity,Attendance ,Comfort
+22,45,40,Comfortable
+24,50,38,Comfortable
+26,55,35,Comfortable
+30,70,25,Not Comfortable
+32,75,20,Not Comfortable
+28,60,30,Comfortable
+34,80,18,Not Comfortable
+23,48,39,Comfortable
+31,72,21,Not Comfortable
+27,58,33,Comfortable
