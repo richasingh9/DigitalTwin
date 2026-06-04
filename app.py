@@ -4,30 +4,53 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import LabelEncoder
 
-# ---------------------
-# Load Dataset
-# ---------------------
+import google.generativeai as genai
 
-df = pd.read_csv("classroom_data.csv")
+# ------------------------
+# Gemini Setup
+# ------------------------
+
+genai.configure(
+    api_key=st.secrets["GEMINI_API_KEY"]
+)
+
+llm = genai.GenerativeModel(
+    "gemini-2.5-flash"
+)
+
+# ------------------------
+# Load Data
+# ------------------------
+
+df = pd.read_csv(
+    "classroom_data.csv"
+)
 
 encoder = LabelEncoder()
 
-df["Comfort"] = encoder.fit_transform(df["Comfort"])
-print(df.columns.tolist())
-X = df[["Temperature","Humidity","Attendance"]]
+df["Comfort"] = encoder.fit_transform(
+    df["Comfort"]
+)
+
+X = df[
+    ["Temperature",
+     "Humidity",
+     "Attendance"]
+]
+
 y = df["Comfort"]
 
 model = RandomForestClassifier()
 
 model.fit(X,y)
 
-# ---------------------
+# ------------------------
 # UI
-# ---------------------
+# ------------------------
 
-st.title("AI Powered Digital Twin")
-
-st.header("Smart Classroom")
+st.title(
+    "AI Powered Classroom Digital Twin"
+)
 
 temperature = st.slider(
     "Temperature",
@@ -50,141 +73,149 @@ attendance = st.slider(
     35
 )
 
-# ---------------------
+# ------------------------
 # Digital Twin
-# ---------------------
+# ------------------------
 
-st.subheader("Digital Twin")
-
-col1,col2,col3 = st.columns(3)
-
-col1.metric(
-    "Temperature",
-    f"{temperature} °C"
+st.subheader(
+    "Digital Twin"
 )
 
-col2.metric(
+c1,c2,c3 = st.columns(3)
+
+c1.metric(
+    "Temperature",
+    f"{temperature}°C"
+)
+
+c2.metric(
     "Humidity",
     f"{humidity}%"
 )
 
-col3.metric(
+c3.metric(
     "Attendance",
     attendance
 )
 
-# ---------------------
-# AI Prediction
-# ---------------------
+# ------------------------
+# ML Prediction
+# ------------------------
 
-prediction = model.predict(
+pred = model.predict(
     [[temperature,
       humidity,
       attendance]]
 )
 
-status = encoder.inverse_transform(prediction)[0]
+status = encoder.inverse_transform(
+    pred
+)[0]
 
-st.subheader("AI Prediction")
+st.subheader(
+    "AI Prediction"
+)
 
 st.success(status)
 
-# ---------------------
-# GenAI Style Assistant
-# ---------------------
+# ------------------------
+# GenAI Assistant
+# ------------------------
 
-st.subheader("AI Assistant")
-
-question = st.text_input(
-    "Ask a Question"
+st.subheader(
+    "Chat with Digital Twin"
 )
 
-if question:
+user_question = st.text_input(
+    "Ask anything about the classroom"
+)
 
-    if status == "Not Comfortable":
+if user_question:
 
-        answer = f"""
-Classroom is uncomfortable because:
+    prompt = f"""
+You are an AI Digital Twin Assistant.
 
-Temperature = {temperature}
+Classroom Status:
 
-Humidity = {humidity}
+Temperature: {temperature}
+Humidity: {humidity}
+Attendance: {attendance}
 
-Attendance = {attendance}
+Prediction: {status}
 
-Recommendation:
+Question:
+{user_question}
 
-Switch on cooling system.
-
-Improve ventilation.
+Give a simple explanation and recommendations.
 """
 
-    else:
+    response = llm.generate_content(
+        prompt
+    )
 
-        answer = """
-Classroom conditions are normal.
-"""
+    st.info(
+        response.text
+    )
 
-    st.info(answer)
-
-# ---------------------
+# ------------------------
 # Agentic AI
-# ---------------------
+# ------------------------
 
-st.subheader("Agent Actions")
+st.subheader(
+    "Autonomous Agent Actions"
+)
 
 actions = []
 
 if attendance < 20:
     actions.append(
-        "Attendance Alert Generated"
+        "Low Attendance Alert"
     )
 
 if temperature > 30:
     actions.append(
-        "Cooling Recommendation Created"
+        "Cooling Recommendation"
     )
 
 if humidity > 70:
     actions.append(
-        "Ventilation Recommendation Created"
+        "Ventilation Recommendation"
     )
 
-if actions:
+for action in actions:
+    st.warning(action)
 
-    for a in actions:
-        st.warning(a)
-
-else:
+if len(actions)==0:
     st.success(
-        "No Action Required"
+        "No action required"
     )
 
-# ---------------------
+# ------------------------
 # Auto Report
-# ---------------------
+# ------------------------
 
 if st.button(
-    "Generate Report"
+    "Generate Smart Report"
 ):
 
-    report = f"""
-SMART CLASSROOM REPORT
+    report_prompt = f"""
+Generate a professional classroom report.
 
 Temperature: {temperature}
-
 Humidity: {humidity}
-
 Attendance: {attendance}
-
 Status: {status}
 
 Actions:
 {actions}
 """
 
+    report = llm.generate_content(
+        report_prompt
+    )
+
     st.download_button(
         "Download Report",
-        report,
-        file_name="report.txt"
+        report.text,
+        file_name="classroom_report.txt"
     )
