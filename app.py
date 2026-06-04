@@ -13,7 +13,7 @@ df = pd.read_csv("classroom_data.csv")
 encoder = LabelEncoder()
 
 df["Comfort"] = encoder.fit_transform(df["Comfort"])
-
+print(df.columns.tolist())
 X = df[["Temperature","Humidity","Attendance"]]
 y = df["Comfort"]
 
